@@ -1,0 +1,4 @@
+.disposals-chart-container, .goals-chart-container {
+    position: relative;
+    width: 50%;
+}

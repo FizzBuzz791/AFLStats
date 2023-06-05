@@ -6,10 +6,10 @@ import PlayerStats from "./components/PlayerStats";
 import { reviverWithMap } from "../utils/stringify";
 import { Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
-import { CategoryScale, ChartData, Title } from "chart.js";
+import { CategoryScale, ChartData } from "chart.js";
 import { Stat } from "../models/stat";
 
-Chart.register(CategoryScale, Title);
+Chart.register(CategoryScale);
 
 function Content() {
   const [team, setTeam] = useState<string | undefined>();
@@ -19,11 +19,12 @@ function Content() {
       "line",
       {
         x: number;
-        y: number;
+        y: number | undefined;
       }[],
       unknown
     >
   >({ datasets: [] });
+  const [rounds, setRounds] = useState<number[]>([]);
 
   async function handleTeamChange(event: React.ChangeEvent<HTMLSelectElement>) {
     setTeam(event.currentTarget.value);
@@ -48,10 +49,12 @@ function Content() {
   }
 
   useEffect(() => {
+    const rounds = [
+      ...new Set(players.flatMap((p) => Array.from(p.disposals.keys()))),
+    ].sort((a, b) => a - b);
+    setRounds(rounds);
     setChartData({
-      labels: [
-        ...new Set(players.flatMap((p) => Array.from(p.disposals.keys()))),
-      ].sort((a, b) => a - b),
+      labels: rounds,
       datasets: players
         .filter((p) => {
           console.log(
@@ -59,14 +62,13 @@ function Content() {
           );
           return p.recentTrend(Stat.Disposals, 5) > 15;
         })
-        .map((p) => {
-          return {
-            label: p.name,
-            data: Array.from(p.disposals.entries()).map((d) => {
-              return { x: d[0], y: d[1] };
-            }),
-          };
-        }),
+        .map((p) => ({
+          label: p.name,
+          data: rounds.map((round, index) => ({
+            x: round,
+            y: p.disposals.get(index + 1),
+          })),
+        })),
     });
   }, [players]);
 
@@ -84,7 +86,6 @@ function Content() {
       ></NativeSelect>
       <div className="chart-container">
         <Line
-          title="Disposals by Round"
           options={{
             plugins: {
               title: {
@@ -96,12 +97,13 @@ function Content() {
           data={chartData}
         ></Line>
       </div>
-      {players
-        // .filter((p) => p.recentTrend(Stat.Disposals, 5) > 15)
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((player) => (
-          <PlayerStats key={player.name} player={player} />
-        ))}
+      <div className="players-container">
+        {players
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((player) => (
+            <PlayerStats key={player.name} player={player} rounds={rounds} />
+          ))}
+      </div>
     </Container>
   );
 }
