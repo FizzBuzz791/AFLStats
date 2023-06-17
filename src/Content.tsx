@@ -1,6 +1,13 @@
-import { Container, NativeSelect } from "@mantine/core";
+import {
+  Avatar,
+  Container,
+  Group,
+  Select,
+  Text,
+  useMantineColorScheme,
+} from "@mantine/core";
 import { Teams } from "../models/teams";
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { Player } from "../models/player";
 import PlayerStats from "./components/PlayerStats";
 import { reviverWithMap } from "../utils/stringify";
@@ -10,6 +17,28 @@ import { CategoryScale, ChartData } from "chart.js";
 import { Stat } from "../models/stat";
 
 Chart.register(CategoryScale);
+
+interface ItemProps extends React.ComponentPropsWithoutRef<"div"> {
+  image: string;
+  label: string;
+  description: string;
+}
+
+const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
+  ({ image, label, description, ...others }: ItemProps, ref) => (
+    <div ref={ref} {...others}>
+      <Group noWrap>
+        <Avatar src={image} />
+        <div>
+          <Text size="sm">{label}</Text>
+          <Text size="xs" opacity={0.65}>
+            {description}
+          </Text>
+        </div>
+      </Group>
+    </div>
+  )
+);
 
 function Content() {
   const [team, setTeam] = useState<string | undefined>();
@@ -25,27 +54,30 @@ function Content() {
     >
   >({ datasets: [] });
   const [rounds, setRounds] = useState<number[]>([]);
+  const { colorScheme } = useMantineColorScheme();
 
-  async function handleTeamChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    setTeam(event.currentTarget.value);
+  async function handleTeamChange(value: string | null) {
+    if (value !== null) {
+      setTeam(value);
 
-    const result = await fetch(
-      `/.netlify/functions/retrieve-data?team=${event.currentTarget.value}`
-    )
-      .then((result) => result.text())
-      .then(
-        (content) =>
-          JSON.parse(content, reviverWithMap) as { players: Player[] }
+      const result = await fetch(
+        `/.netlify/functions/retrieve-data?team=${value}`
       )
-      .then((response) =>
-        response.players.map((p) => {
-          const fullPlayer = new Player(p.name);
-          fullPlayer.disposals = p.disposals;
-          fullPlayer.goals = p.goals;
-          return fullPlayer;
-        })
-      );
-    setPlayers(result);
+        .then((result) => result.text())
+        .then(
+          (content) =>
+            JSON.parse(content, reviverWithMap) as { players: Player[] }
+        )
+        .then((response) =>
+          response.players.map((p) => {
+            const fullPlayer = new Player(p.name);
+            fullPlayer.disposals = p.disposals;
+            fullPlayer.goals = p.goals;
+            return fullPlayer;
+          })
+        );
+      setPlayers(result);
+    }
   }
 
   useEffect(() => {
@@ -56,12 +88,7 @@ function Content() {
     setChartData({
       labels: rounds,
       datasets: players
-        .filter((p) => {
-          console.log(
-            `${p.name}: Recent Trend: ${p.recentTrend(Stat.Disposals, 5)}`
-          );
-          return p.recentTrend(Stat.Disposals, 5) > 15;
-        })
+        .filter((p) => p.recentTrend(Stat.Disposals, 5) > 15)
         .map((p) => ({
           label: p.name,
           data: rounds.map((round, index) => ({
@@ -74,16 +101,18 @@ function Content() {
 
   return (
     <Container>
-      <NativeSelect
+      <Select
         label="Team"
         placeholder="Choose a team"
+        itemComponent={SelectItem}
         data={Object.entries(Teams).map((entry) => ({
           value: entry[0],
           label: entry[1],
+          image: `${entry[0]}-${colorScheme}-mode.svg`,
         }))}
         value={team}
         onChange={handleTeamChange}
-      ></NativeSelect>
+      ></Select>
       <div className="chart-container">
         <Line
           options={{
