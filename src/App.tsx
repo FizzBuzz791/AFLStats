@@ -2,6 +2,7 @@ import {
   AppShell,
   ColorScheme,
   ColorSchemeProvider,
+  Divider,
   Group,
   Header,
   MantineProvider,
@@ -10,6 +11,7 @@ import {
 import { ThemeToggle } from "./ThemeToggle";
 import { useColorScheme, useLocalStorage } from "@mantine/hooks";
 import Content from "./Content";
+import { GitHubLink } from "./GitHubLink";
 
 function App() {
   const preferredColorScheme = useColorScheme();
@@ -39,7 +41,11 @@ function App() {
                 <Group>
                   <Title>AFL Stats</Title>
                 </Group>
-                <ThemeToggle />
+                <Group>
+                  <ThemeToggle />
+                  <Divider orientation="vertical" />
+                  <GitHubLink />
+                </Group>
               </Group>
             </Header>
           }

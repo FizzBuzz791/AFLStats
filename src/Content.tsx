@@ -1,13 +1,6 @@
-import {
-  Avatar,
-  Container,
-  Group,
-  Select,
-  Text,
-  useMantineColorScheme,
-} from "@mantine/core";
+import { Container, Select, useMantineColorScheme } from "@mantine/core";
 import { Teams } from "../models/teams";
-import { forwardRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Player } from "../models/player";
 import PlayerStats from "./components/PlayerStats";
 import { reviverWithMap } from "../utils/stringify";
@@ -15,30 +8,9 @@ import { Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
 import { CategoryScale, ChartData } from "chart.js";
 import { Stat } from "../models/stat";
+import { SelectItem } from "./components/SelectItem";
 
 Chart.register(CategoryScale);
-
-interface ItemProps extends React.ComponentPropsWithoutRef<"div"> {
-  image: string;
-  label: string;
-  description: string;
-}
-
-const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
-  ({ image, label, description, ...others }: ItemProps, ref) => (
-    <div ref={ref} {...others}>
-      <Group noWrap>
-        <Avatar src={image} />
-        <div>
-          <Text size="sm">{label}</Text>
-          <Text size="xs" opacity={0.65}>
-            {description}
-          </Text>
-        </div>
-      </Group>
-    </div>
-  )
-);
 
 function Content() {
   const [team, setTeam] = useState<string | undefined>();

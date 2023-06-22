@@ -1,6 +1,6 @@
-import fs from "fs";
+import { readFileSync, writeFileSync } from "fs";
 
-const iconsFile = fs.readFileSync("public/icons.svg", { encoding: "utf-8" });
+const iconsFile = readFileSync("public/icons.svg", { encoding: "utf-8" });
 const lines = iconsFile.split("\n").map((l) => l.trim());
 
 // i = 1 to skip the svg tag
@@ -22,7 +22,7 @@ while (i < lines.length - 1) {
   // TODO: dynamic viewbox
   const svgTag =
     '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 200">';
-  fs.writeFileSync(
+  writeFileSync(
     `scripts/${id}.svg`,
     `${svgTag}\n${svgLines.join("\n")}\n</svg>`,
     {
