@@ -57,6 +57,14 @@ function buildChart(
 ) {
   const options = JSON.parse(JSON.stringify(baseOptions));
   options.plugins.title.text = `${targetStat} by Round`;
+  options.scales = {
+    y: {
+      beginAtZero: targetStat === Stat.Goals,
+      ticks: {
+        stepSize: targetStat === Stat.Disposals ? 5 : 1,
+      },
+    },
+  };
 
   // TODO: This bit sucks. Using player[targetStat] would be nicer.
   const targetMap =
