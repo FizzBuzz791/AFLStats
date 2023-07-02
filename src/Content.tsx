@@ -60,6 +60,7 @@ function Content() {
         }))}
         value={team}
         onChange={handleTeamChange}
+        p="md"
       ></Select>
       <div className="players-container">
         {players

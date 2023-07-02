@@ -10,6 +10,9 @@ interface PlayerStatsProps {
   rounds: number[];
 }
 
+const shortTrendGameCount = 3;
+const longTrendGameCount = 5;
+
 function PlayerStats({ player, rounds }: PlayerStatsProps) {
   const fullPlayer = new Player(player.name);
   fullPlayer.disposals = player.disposals;
@@ -69,7 +72,8 @@ function buildChart(
   // TODO: This bit sucks. Using player[targetStat] would be nicer.
   const targetMap =
     targetStat == Stat.Disposals ? player.disposals : player.goals;
-  const trend = player.recentTrend(targetStat, 5);
+  const shortTrend = player.recentTrend(targetStat, shortTrendGameCount);
+  const longTrend = player.recentTrend(targetStat, longTrendGameCount);
   const average = player.average(targetStat);
 
   const data: ChartData<
@@ -88,13 +92,22 @@ function buildChart(
         order: 1,
       },
       {
-        label: "5 Game Trend",
-        data: rounds.slice(-5).map((round) => ({
+        label: `${shortTrendGameCount} Game Trend`,
+        data: rounds.slice(-shortTrendGameCount).map((round) => ({
           x: round,
-          y: trend,
+          y: shortTrend,
         })),
         pointStyle: false,
         order: 2,
+      },
+      {
+        label: `${longTrendGameCount} Game Trend`,
+        data: rounds.slice(-longTrendGameCount).map((round) => ({
+          x: round,
+          y: longTrend,
+        })),
+        pointStyle: false,
+        order: 3,
       },
       {
         label: "Average",
@@ -103,7 +116,7 @@ function buildChart(
           y: average,
         })),
         pointStyle: false,
-        order: 3,
+        order: 4,
       },
     ],
   };
