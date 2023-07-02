@@ -2,16 +2,11 @@ import {
   AppShell,
   ColorScheme,
   ColorSchemeProvider,
-  Divider,
-  Group,
-  Header,
   MantineProvider,
-  Title,
 } from "@mantine/core";
-import { ThemeToggle } from "./ThemeToggle";
 import { useColorScheme, useLocalStorage } from "@mantine/hooks";
 import Content from "./Content";
-import { GitHubLink } from "./GitHubLink";
+import AppHeader from "./AppHeader";
 
 function App() {
   const preferredColorScheme = useColorScheme();
@@ -33,23 +28,7 @@ function App() {
         withNormalizeCSS
         theme={{ colorScheme }}
       >
-        <AppShell
-          padding="md"
-          header={
-            <Header height={60}>
-              <Group sx={{ height: "100%" }} px={20} position="apart">
-                <Group>
-                  <Title>AFL Stats</Title>
-                </Group>
-                <Group>
-                  <ThemeToggle />
-                  <Divider orientation="vertical" />
-                  <GitHubLink />
-                </Group>
-              </Group>
-            </Header>
-          }
-        >
+        <AppShell padding="md" header={<AppHeader />}>
           <Content />
         </AppShell>
       </MantineProvider>

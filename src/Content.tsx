@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import { Player } from "../models/player";
 import PlayerStats from "./components/PlayerStats";
 import { reviverWithMap } from "../utils/stringify";
-import { Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
-import { CategoryScale, ChartData } from "chart.js";
-import { Stat } from "../models/stat";
+import { CategoryScale } from "chart.js";
 import { SelectItem } from "./components/SelectItem";
 
 Chart.register(CategoryScale);
@@ -15,16 +13,6 @@ Chart.register(CategoryScale);
 function Content() {
   const [team, setTeam] = useState<string | undefined>();
   const [players, setPlayers] = useState<Player[]>([]);
-  const [chartData, setChartData] = useState<
-    ChartData<
-      "line",
-      {
-        x: number;
-        y: number | undefined;
-      }[],
-      unknown
-    >
-  >({ datasets: [] });
   const [rounds, setRounds] = useState<number[]>([]);
   const { colorScheme } = useMantineColorScheme();
 
@@ -57,18 +45,6 @@ function Content() {
       ...new Set(players.flatMap((p) => Array.from(p.disposals.keys()))),
     ].sort((a, b) => a - b);
     setRounds(rounds);
-    setChartData({
-      labels: rounds,
-      datasets: players
-        .filter((p) => p.recentTrend(Stat.Disposals, 5) > 15)
-        .map((p) => ({
-          label: p.name,
-          data: rounds.map((round, index) => ({
-            x: round,
-            y: p.disposals.get(index + 1),
-          })),
-        })),
-    });
   }, [players]);
 
   return (
@@ -85,19 +61,6 @@ function Content() {
         value={team}
         onChange={handleTeamChange}
       ></Select>
-      <div className="chart-container">
-        <Line
-          options={{
-            plugins: {
-              title: {
-                display: players.length > 0,
-                text: "Disposals by Round",
-              },
-            },
-          }}
-          data={chartData}
-        ></Line>
-      </div>
       <div className="players-container">
         {players
           .sort((a, b) => a.name.localeCompare(b.name))
