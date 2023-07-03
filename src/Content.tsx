@@ -3,10 +3,10 @@ import { Teams } from "../models/teams";
 import { useEffect, useState } from "react";
 import { Player } from "../models/player";
 import PlayerStats from "./components/PlayerStats";
-import { reviverWithMap } from "../utils/stringify";
 import Chart from "chart.js/auto";
 import { CategoryScale } from "chart.js";
 import { SelectItem } from "./components/SelectItem";
+import { Stat } from "../models/stat";
 
 Chart.register(CategoryScale);
 
@@ -24,31 +24,23 @@ function Content() {
         `/.netlify/functions/retrieve-data?team=${value}`
       )
         .then((result) => result.text())
-        .then(
-          (content) =>
-            JSON.parse(content, reviverWithMap) as { players: Player[] }
-        )
-        .then((response) =>
-          response.players.map((p) => {
-            const fullPlayer = new Player(p.name);
-            fullPlayer.disposals = p.disposals;
-            fullPlayer.goals = p.goals;
-            return fullPlayer;
-          })
-        );
+        .then((content) => JSON.parse(content) as { players: Player[] })
+        .then((response) => response.players);
       setPlayers(result);
     }
   }
 
   useEffect(() => {
     const rounds = [
-      ...new Set(players.flatMap((p) => Array.from(p.disposals.keys()))),
+      ...new Set(
+        players.flatMap((p) => p[Stat.Disposals]).flatMap((s) => s?.round ?? 1)
+      ),
     ].sort((a, b) => a - b);
     setRounds(rounds);
   }, [players]);
 
   return (
-    <Container>
+    <Container fluid>
       <Select
         label="Team"
         placeholder="Choose a team"

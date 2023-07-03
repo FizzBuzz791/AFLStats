@@ -1,7 +1,6 @@
-import { Card, Flex, Text } from "@mantine/core";
-import { Player } from "../../models/player";
+import { Card, Flex, Text, createStyles } from "@mantine/core";
+import { Player, recentTrend, average } from "../../models/player";
 import { Line } from "react-chartjs-2";
-import "./PlayerStats.css";
 import { Stat } from "../../models/stat";
 import { ChartData } from "chart.js";
 
@@ -13,10 +12,14 @@ interface PlayerStatsProps {
 const shortTrendGameCount = 3;
 const longTrendGameCount = 5;
 
+const useStyles = createStyles(() => ({
+  chartContainer: {
+    width: `${100 / Object.values(Stat).length}%`,
+  },
+}));
+
 function PlayerStats({ player, rounds }: PlayerStatsProps) {
-  const fullPlayer = new Player(player.name);
-  fullPlayer.disposals = player.disposals;
-  fullPlayer.goals = player.goals;
+  const { classes } = useStyles();
 
   const baseOptions = {
     plugins: {
@@ -39,14 +42,15 @@ function PlayerStats({ player, rounds }: PlayerStatsProps) {
 
   return (
     <Card>
-      <Text>{fullPlayer.name}</Text>
+      <Text>{player.name}</Text>
       <Flex direction="row" justify="space-evenly">
-        <div className="disposals-chart-container">
-          {buildChart(baseOptions, rounds, Stat.Disposals, fullPlayer)}
-        </div>
-        <div className="goals-chart-container">
-          {buildChart(baseOptions, rounds, Stat.Goals, fullPlayer)}
-        </div>
+        {Object.values(Stat).map((stat) => {
+          return (
+            <div className={classes.chartContainer}>
+              {buildChart(baseOptions, rounds, stat, player)}
+            </div>
+          );
+        })}
       </Flex>
     </Card>
   );
@@ -55,26 +59,23 @@ function PlayerStats({ player, rounds }: PlayerStatsProps) {
 function buildChart(
   baseOptions: unknown,
   rounds: number[],
-  targetStat: Stat,
+  stat: Stat,
   player: Player
 ) {
   const options = JSON.parse(JSON.stringify(baseOptions));
-  options.plugins.title.text = `${targetStat} by Round`;
+  options.plugins.title.text = `${stat} by Round`;
   options.scales = {
     y: {
-      beginAtZero: targetStat === Stat.Goals,
+      beginAtZero: stat === Stat.Goals,
       ticks: {
-        stepSize: targetStat === Stat.Disposals ? 5 : 1,
+        stepSize: stat === Stat.Disposals ? 5 : 1,
       },
     },
   };
 
-  // TODO: This bit sucks. Using player[targetStat] would be nicer.
-  const targetMap =
-    targetStat == Stat.Disposals ? player.disposals : player.goals;
-  const shortTrend = player.recentTrend(targetStat, shortTrendGameCount);
-  const longTrend = player.recentTrend(targetStat, longTrendGameCount);
-  const average = player.average(targetStat);
+  const shortTrend = recentTrend(player, stat, shortTrendGameCount);
+  const longTrend = recentTrend(player, stat, longTrendGameCount);
+  const averageStat = average(player, stat);
 
   const data: ChartData<
     "line",
@@ -84,10 +85,10 @@ function buildChart(
     labels: rounds,
     datasets: [
       {
-        label: targetStat,
+        label: stat,
         data: rounds.map((round) => ({
           x: round,
-          y: targetMap.get(round),
+          y: player[stat]?.find((s) => s.round === round)?.value,
         })),
         order: 1,
       },
@@ -113,7 +114,7 @@ function buildChart(
         label: "Average",
         data: rounds.map((round) => ({
           x: round,
-          y: average,
+          y: averageStat,
         })),
         pointStyle: false,
         order: 4,

@@ -1,66 +1,52 @@
 import { Stat } from "./stat";
 
-export class Player {
+export type RoundStat = {
+  round: number;
+  value: number;
+};
+
+type PlayerStats = {
+  // Stats by round
+  [key in Stat]?: RoundStat[] | undefined;
+};
+
+export type Player = PlayerStats & {
   name: string;
-  // Disposals by round
-  disposals: Map<number, number> = new Map<number, number>();
-  // Goals by round
-  goals: Map<number, number> = new Map<number, number>();
+};
 
-  constructor(name: string) {
-    this.name = name;
+/**
+ * Get the average for the entire season.
+ * @param stat which stat to consider.
+ * @returns average of the stat.
+ */
+export function average(player: Player, stat: Stat): number {
+  const targetStat = player[stat];
+
+  if (targetStat) {
+    const total = targetStat.reduce((acc, val) => acc + val.value, 0);
+    return Math.floor(total / targetStat.length);
+  } else {
+    return 0;
   }
+}
 
-  /**
-   * Get the average for the entire season.
-   * @param stat which stat to consider.
-   * @returns average of the stat.
-   */
-  average(stat: Stat): number {
-    let targetMap: Map<number, number>;
-    switch (stat) {
-      case Stat.Disposals:
-        targetMap = this.disposals;
-        break;
-      case Stat.Goals:
-        targetMap = this.goals;
-        break;
-    }
+/**
+ * Get the average from the most recent games.
+ * @param stat which stat to consider.
+ * @param games number of games to consider.
+ * @returns average disposals over the last X games.
+ */
+export function recentTrend(player: Player, stat: Stat, games: number): number {
+  // i.e. if we want to consider the last 5 games but they've only played 2, then we should average over those 2.
+  const targetStat = player[stat];
 
-    const total = Array.from(targetMap.values()).reduce(
-      (acc, val) => acc + val,
-      0
-    );
-    return Math.floor(total / targetMap.size);
-  }
-
-  /**
-   * Get the average from the most recent games.
-   * @param stat which stat to consider.
-   * @param games number of games to consider.
-   * @returns average disposals over the last X games.
-   */
-  recentTrend(stat: Stat, games: number): number {
-    // i.e. if we want to consider the last 5 games but they've only played 2, then we should average over those 2.
-    let targetMap: Map<number, number>;
-    switch (stat) {
-      case Stat.Disposals:
-        targetMap = this.disposals;
-        break;
-      case Stat.Goals:
-        targetMap = this.goals;
-        break;
-    }
-    const gamesPlayed = Math.min(games, targetMap.size);
-    const statValues = Array.from(targetMap.values());
-    let total = 0;
-    for (
-      let i = statValues.length - 1;
-      i >= statValues.length - gamesPlayed;
-      i--
-    ) {
-      total += statValues[i];
-    }
+  if (targetStat) {
+    const gamesPlayed = Math.min(games, targetStat.length);
+    const total = targetStat
+      .slice(-games)
+      .reduce((acc, val) => acc + val.value, 0);
     return Math.floor(total / gamesPlayed);
+  } else {
+    return 0;
   }
 }

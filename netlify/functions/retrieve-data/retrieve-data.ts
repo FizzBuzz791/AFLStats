@@ -3,8 +3,7 @@ import { DomUtils, parseDocument } from "htmlparser2";
 import { Element } from "domhandler";
 import { Team } from "../../../models/teams";
 import { Stat } from "../../../models/stat";
-import { Player } from "../../../models/player";
-import { replacerWithMap } from "../../../utils/stringify";
+import { Player, RoundStat } from "../../../models/player";
 
 export const handler: Handler = async (
   event: HandlerEvent,
@@ -17,25 +16,28 @@ export const handler: Handler = async (
       event.queryStringParameters.team as Team
     );
     if (tablesContainer !== null) {
-      const playersWithDisposals = getPlayersWithStats(
-        tablesContainer,
-        Stat.Disposals
-      );
-      const playersWithGoals = getPlayersWithStats(tablesContainer, Stat.Goals);
+      const playersWithStats: Player[] = [];
 
-      const combinedPlayers: Player[] = [];
-      for (const playerWithDisposals of playersWithDisposals) {
-        const playerWithGoals = playersWithGoals.find(
-          (p) => p.name == playerWithDisposals.name
-        );
-        const player = new Player(playerWithDisposals.name);
-        player.disposals = playerWithDisposals.disposals;
-        player.goals = playerWithGoals?.goals ?? new Map<number, number>();
-        combinedPlayers.push(player);
+      for (const stat of Object.values(Stat)) {
+        playersWithStats.push(...getPlayersWithStats(tablesContainer, stat));
       }
+
+      const combinedPlayers = new Map();
+
+      playersWithStats.forEach((player) => {
+        combinedPlayers.has(player.name)
+          ? combinedPlayers.set(player.name, {
+              ...player,
+              ...combinedPlayers.get(player.name),
+            })
+          : combinedPlayers.set(player.name, player);
+      });
+
       return {
         statusCode: 200,
-        body: JSON.stringify({ players: combinedPlayers }, replacerWithMap),
+        body: JSON.stringify({
+          players: Array.from(combinedPlayers.values()),
+        }),
       };
     } else {
       return {
@@ -100,11 +102,11 @@ function getPlayersWithStats(tablesContainer: Element, stat: Stat): Player[] {
           row.children
         );
         const playerNameCell = DomUtils.textContent(tableCells[0]).trim();
-        const player = new Player(
-          `${playerNameCell.split(",")[1].trim()} ${playerNameCell
+        const player: Player = {
+          name: `${playerNameCell.split(",")[1].trim()} ${playerNameCell
             .split(",")[0]
-            .trim()}`
-        );
+            .trim()}`,
+        };
         for (const [index, cell] of tableCells.entries()) {
           const content = DomUtils.textContent(cell).trim();
           if (content.length > 0 && content !== "-") {
@@ -115,13 +117,16 @@ function getPlayersWithStats(tablesContainer: Element, stat: Stat): Player[] {
               case tableCells.length - 1:
                 // Do nothing, we can dynamically calculate the total
                 break;
-              default:
-                if (stat === Stat.Disposals) {
-                  player.disposals.set(index, Number.parseInt(content));
-                } else {
-                  player.goals.set(index, Number.parseInt(content));
-                }
+              default: {
+                const roundStat: RoundStat = {
+                  round: index,
+                  value: Number.parseInt(content),
+                };
+                player[stat] !== undefined
+                  ? player[stat]?.push(roundStat)
+                  : (player[stat] = [roundStat]);
                 break;
+              }
             }
           }
         }
