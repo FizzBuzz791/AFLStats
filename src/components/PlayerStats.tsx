@@ -37,9 +37,6 @@ function PlayerStats({ player, rounds }: PlayerStatsProps) {
     spanGaps: false,
   };
 
-  const goalsOptions = JSON.parse(JSON.stringify(baseOptions));
-  goalsOptions.plugins.title.text = "Goals by Round";
-
   return (
     <Card>
       <Text>{player.name}</Text>

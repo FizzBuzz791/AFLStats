@@ -11,15 +11,17 @@ export const handler: Handler = async (
   _context: HandlerContext
 ) => {
   if (event.queryStringParameters) {
-    // Do things
     const tablesContainer = await getTablesContainer(
       event.queryStringParameters.team as Team
     );
     if (tablesContainer !== null) {
+      const roundMap = getRoundMapping(tablesContainer);
       const playersWithStats: Player[] = [];
 
       for (const stat of Object.values(Stat)) {
-        playersWithStats.push(...getPlayersWithStats(tablesContainer, stat));
+        playersWithStats.push(
+          ...getPlayersWithStats(tablesContainer, stat, roundMap)
+        );
       }
 
       const combinedPlayers = new Map();
@@ -75,7 +77,38 @@ async function getTablesContainer(team: Team): Promise<Element | null> {
     );
 }
 
-function getPlayersWithStats(tablesContainer: Element, stat: Stat): Player[] {
+function getRoundMapping(tablesContainer: Element): Map<number, number> {
+  const roundMap: Map<number, number> = new Map();
+
+  const header = DomUtils.findOne(
+    (n) => DomUtils.textContent(n) === Stat.Disposals, // Doesn't matter which stat
+    tablesContainer.childNodes,
+    true
+  );
+
+  if (header !== undefined && header !== null) {
+    const headerRow = DomUtils.getParent(header);
+    const headerCells = DomUtils.findAll(
+      (n) => n.tagName === "th",
+      headerRow?.children.slice(1) ?? [] // .slice(1) to skip the "Stat" header
+    );
+    for (const [index, cell] of headerCells.entries()) {
+      const content = DomUtils.textContent(cell).trim();
+      const parsedContent = Number.parseInt(content.replace("R", ""));
+      if (Number.isInteger(parsedContent)) {
+        roundMap.set(index, parsedContent);
+      }
+    }
+  }
+
+  return roundMap;
+}
+
+function getPlayersWithStats(
+  tablesContainer: Element,
+  stat: Stat,
+  roundMap: Map<number, number>
+): Player[] {
   const players: Player[] = [];
   const header = DomUtils.findOne(
     (n) => DomUtils.textContent(n) === stat,
@@ -85,6 +118,7 @@ function getPlayersWithStats(tablesContainer: Element, stat: Stat): Player[] {
 
   if (header !== undefined && header !== null) {
     const headerRow = DomUtils.getParent(header);
+
     if (headerRow !== undefined && headerRow !== null) {
       const table = DomUtils.getParent(headerRow);
       const tableBody = DomUtils.findOne(
@@ -119,7 +153,7 @@ function getPlayersWithStats(tablesContainer: Element, stat: Stat): Player[] {
                 break;
               default: {
                 const roundStat: RoundStat = {
-                  round: index,
+                  round: roundMap.get(index) ?? -1, // Fallback to -1, indicates an issue
                   value: Number.parseInt(content),
                 };
                 player[stat] !== undefined
