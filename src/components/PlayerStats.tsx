@@ -1,27 +1,20 @@
-import { Card, Flex, Text, createStyles } from "@mantine/core";
+import { Card, Flex, Text } from "@mantine/core";
 import { Player, recentTrend, average } from "../../models/player";
 import { Line } from "react-chartjs-2";
 import { Stat } from "../../models/stat";
-import { ChartData } from "chart.js";
+import { ChartData, ChartOptions } from "chart.js";
 
 interface PlayerStatsProps {
   player: Player;
   rounds: number[];
+  selectedStats: Stat[];
 }
 
 const shortTrendGameCount = 3;
 const longTrendGameCount = 5;
 
-const useStyles = createStyles(() => ({
-  chartContainer: {
-    width: `${100 / Object.values(Stat).length}%`,
-  },
-}));
-
-function PlayerStats({ player, rounds }: PlayerStatsProps) {
-  const { classes } = useStyles();
-
-  const baseOptions = {
+function PlayerStats({ player, rounds, selectedStats }: PlayerStatsProps) {
+  const baseOptions: ChartOptions<"line"> = {
     plugins: {
       title: {
         display: true,
@@ -41,9 +34,15 @@ function PlayerStats({ player, rounds }: PlayerStatsProps) {
     <Card>
       <Text>{player.name}</Text>
       <Flex direction="row" justify="space-evenly">
-        {Object.values(Stat).map((stat) => {
+        {selectedStats.map((stat) => {
           return (
-            <div className={classes.chartContainer}>
+            <div
+              key={stat}
+              style={{
+                width: `${100 / selectedStats.length}%`,
+                position: "relative",
+              }}
+            >
               {buildChart(baseOptions, rounds, stat, player)}
             </div>
           );
@@ -54,7 +53,7 @@ function PlayerStats({ player, rounds }: PlayerStatsProps) {
 }
 
 function buildChart(
-  baseOptions: unknown,
+  baseOptions: ChartOptions<"line">,
   rounds: number[],
   stat: Stat,
   player: Player
@@ -119,7 +118,7 @@ function buildChart(
     ],
   };
 
-  return <Line options={options} data={data}></Line>;
+  return <Line options={options} data={data} redraw={true}></Line>;
 }
 
 export default PlayerStats;
