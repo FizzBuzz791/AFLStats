@@ -9,7 +9,7 @@ import { Teams } from "../models/teams";
 import { useEffect, useState } from "react";
 import { Player } from "../models/player";
 import PlayerStats from "./components/PlayerStats";
-import Chart from "chart.js/auto";
+import { Chart } from "chart.js/auto";
 import { CategoryScale } from "chart.js";
 import { SelectItem } from "./components/SelectItem";
 import { Stat } from "../models/stat";
