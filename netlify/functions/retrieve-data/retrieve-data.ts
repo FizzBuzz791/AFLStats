@@ -143,7 +143,7 @@ function getPlayersWithStats(
         };
         for (const [index, cell] of tableCells.entries()) {
           const content = DomUtils.textContent(cell).trim();
-          if (content.length > 0 && content !== "-") {
+          if (content.length > 0) {
             switch (index) {
               case 0:
                 // Do nothing, we've already grabbed the name
@@ -154,7 +154,7 @@ function getPlayersWithStats(
               default: {
                 const roundStat: RoundStat = {
                   round: roundMap.get(index) ?? -1, // Fallback to -1, indicates an issue
-                  value: Number.parseInt(content),
+                  value: content === "-" ? 0 : Number.parseInt(content),
                 };
                 player[stat] !== undefined
                   ? player[stat]?.push(roundStat)
