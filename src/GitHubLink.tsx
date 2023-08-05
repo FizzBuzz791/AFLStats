@@ -4,6 +4,7 @@ import { IconBrandGithub } from "@tabler/icons-react";
 export function GitHubLink() {
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === "dark";
+
   return (
     <ActionIcon
       variant="outline"
@@ -11,6 +12,7 @@ export function GitHubLink() {
       onClick={() =>
         window.open("https://github.com/FizzBuzz791/AFLStats", "_blank")
       }
+      title="Go to GitHub repository"
     >
       <IconBrandGithub size="1.1rem" />
     </ActionIcon>
