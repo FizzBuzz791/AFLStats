@@ -1,10 +1,4 @@
-import {
-  Checkbox,
-  Container,
-  Group,
-  Select,
-  useMantineColorScheme,
-} from "@mantine/core";
+import { Checkbox, Container, Group, Select } from "@mantine/core";
 import { Teams } from "../models/teams";
 import { useEffect, useState } from "react";
 import { Player } from "../models/player";
@@ -26,7 +20,6 @@ function Content() {
     defaultValue: Object.values(Stat),
     getInitialValueInEffect: true,
   });
-  const { colorScheme } = useMantineColorScheme();
 
   async function handleTeamChange(value: string | null) {
     if (value !== null) {
@@ -57,11 +50,10 @@ function Content() {
         <Select
           label="Team"
           placeholder="Choose a team"
-          itemComponent={SelectItem}
+          renderOption={SelectItem}
           data={Object.entries(Teams).map((entry) => ({
             value: entry[0],
             label: entry[1],
-            image: `${entry[0]}-${colorScheme}-mode.svg`,
           }))}
           value={team}
           onChange={handleTeamChange}
