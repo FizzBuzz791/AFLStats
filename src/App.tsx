@@ -1,38 +1,21 @@
-import {
-  AppShell,
-  ColorScheme,
-  ColorSchemeProvider,
-  MantineProvider,
-} from "@mantine/core";
-import { useColorScheme, useLocalStorage } from "@mantine/hooks";
+import { AppShell, MantineProvider } from "@mantine/core";
 import Content from "./Content";
 import AppHeader from "./AppHeader";
 
-function App() {
-  const preferredColorScheme = useColorScheme();
-  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
-    key: "mantine-color-scheme",
-    defaultValue: preferredColorScheme,
-    getInitialValueInEffect: true,
-  });
-  const toggleColorScheme = (value?: ColorScheme) =>
-    setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
+import "@mantine/core/styles.css";
 
+function App() {
   return (
-    <ColorSchemeProvider
-      colorScheme={colorScheme}
-      toggleColorScheme={toggleColorScheme}
-    >
-      <MantineProvider
-        withGlobalStyles
-        withNormalizeCSS
-        theme={{ colorScheme }}
-      >
-        <AppShell padding="md" header={<AppHeader />}>
+    <MantineProvider defaultColorScheme="auto">
+      <AppShell padding="md" header={{ height: 60 }}>
+        <AppShell.Header>
+          <AppHeader />
+        </AppShell.Header>
+        <AppShell.Main>
           <Content />
-        </AppShell>
-      </MantineProvider>
-    </ColorSchemeProvider>
+        </AppShell.Main>
+      </AppShell>
+    </MantineProvider>
   );
 }
 
