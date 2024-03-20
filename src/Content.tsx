@@ -1,4 +1,4 @@
-import { Checkbox, Container, Group, Select } from "@mantine/core";
+import { Checkbox, Container, Group, NumberInput, Select } from "@mantine/core";
 import { Teams } from "../models/teams";
 import { useEffect, useState } from "react";
 import { Player } from "../models/player";
@@ -12,6 +12,7 @@ import { useLocalStorage } from "@mantine/hooks";
 Chart.register(CategoryScale);
 
 function Content() {
+  const [year, setYear] = useState<number>(new Date().getFullYear());
   const [team, setTeam] = useState<string | undefined>();
   const [players, setPlayers] = useState<Player[]>([]);
   const [rounds, setRounds] = useState<number[]>([]);
@@ -21,19 +22,17 @@ function Content() {
     getInitialValueInEffect: true,
   });
 
-  async function handleTeamChange(value: string | null) {
-    if (value !== null) {
-      setTeam(value);
-
-      const result = await fetch(
-        `/.netlify/functions/retrieve-data?team=${value}`
-      )
+  useEffect(() => {
+    async function getTeamStats() {
+      await fetch(`/.netlify/functions/retrieve-data?team=${team}&year=${year}`)
         .then((result) => result.text())
         .then((content) => JSON.parse(content) as { players: Player[] })
-        .then((response) => response.players);
-      setPlayers(result);
+        .then((response) => response.players)
+        .then((players) => setPlayers(players));
     }
-  }
+
+    getTeamStats();
+  }, [year, team]);
 
   useEffect(() => {
     const rounds = [
@@ -47,6 +46,13 @@ function Content() {
   return (
     <Container fluid>
       <Group>
+        <NumberInput
+          label="Year"
+          value={year}
+          onChange={(value) =>
+            setYear(typeof value === "string" ? Number.parseInt(value) : value)
+          }
+        />
         <Select
           label="Team"
           placeholder="Choose a team"
@@ -56,7 +62,11 @@ function Content() {
             label: entry[1],
           }))}
           value={team}
-          onChange={handleTeamChange}
+          onChange={(value) => {
+            if (value !== null) {
+              setTeam(value);
+            }
+          }}
           p="md"
         ></Select>
         <Checkbox.Group

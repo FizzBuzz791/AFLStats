@@ -12,7 +12,8 @@ export const handler: Handler = async (
 ) => {
   if (event.queryStringParameters) {
     const tablesContainer = await getTablesContainer(
-      event.queryStringParameters.team as Team
+      event.queryStringParameters.team as Team,
+      Number.parseInt(event.queryStringParameters.year ?? "2024")
     );
     if (tablesContainer !== null) {
       const roundMap = getRoundMapping(tablesContainer);
@@ -59,8 +60,11 @@ export const handler: Handler = async (
   }
 };
 
-async function getTablesContainer(team: Team): Promise<Element | null> {
-  const url = `https://afltables.com/afl/stats/teams/${team}/2023_gbg.html`;
+async function getTablesContainer(
+  team: Team,
+  year: number
+): Promise<Element | null> {
+  const url = `https://afltables.com/afl/stats/teams/${team}/${year}_gbg.html`;
   const headers = new Headers();
   return await fetch(url, { headers: headers })
     .then((result) => result.text())
