@@ -31,7 +31,9 @@ function Content() {
         .then((players) => setPlayers(players));
     }
 
-    getTeamStats();
+    if (team && year) {
+      getTeamStats();
+    }
   }, [year, team]);
 
   useEffect(() => {

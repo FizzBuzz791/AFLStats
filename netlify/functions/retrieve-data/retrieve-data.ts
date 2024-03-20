@@ -11,42 +11,54 @@ export const handler: Handler = async (
   _context: HandlerContext
 ) => {
   if (event.queryStringParameters) {
-    const tablesContainer = await getTablesContainer(
-      event.queryStringParameters.team as Team,
-      Number.parseInt(event.queryStringParameters.year ?? "2024")
-    );
-    if (tablesContainer !== null) {
-      const roundMap = getRoundMapping(tablesContainer);
-      const playersWithStats: Player[] = [];
+    const team = event.queryStringParameters.team;
+    const year = event.queryStringParameters.year;
 
-      for (const stat of Object.values(Stat)) {
-        playersWithStats.push(
-          ...getPlayersWithStats(tablesContainer, stat, roundMap)
-        );
+    if (team !== undefined && year !== undefined) {
+      const tablesContainer = await getTablesContainer(
+        team as Team,
+        Number.parseInt(year ?? "2024")
+      );
+      if (tablesContainer !== null) {
+        const roundMap = getRoundMapping(tablesContainer);
+        const playersWithStats: Player[] = [];
+
+        for (const stat of Object.values(Stat)) {
+          playersWithStats.push(
+            ...getPlayersWithStats(tablesContainer, stat, roundMap)
+          );
+        }
+
+        const combinedPlayers = new Map();
+
+        playersWithStats.forEach((player) => {
+          combinedPlayers.has(player.name)
+            ? combinedPlayers.set(player.name, {
+                ...player,
+                ...combinedPlayers.get(player.name),
+              })
+            : combinedPlayers.set(player.name, player);
+        });
+
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            players: Array.from(combinedPlayers.values()),
+          }),
+        };
+      } else {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({
+            message: "Unable to find tables",
+          }),
+        };
       }
-
-      const combinedPlayers = new Map();
-
-      playersWithStats.forEach((player) => {
-        combinedPlayers.has(player.name)
-          ? combinedPlayers.set(player.name, {
-              ...player,
-              ...combinedPlayers.get(player.name),
-            })
-          : combinedPlayers.set(player.name, player);
-      });
-
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          players: Array.from(combinedPlayers.values()),
-        }),
-      };
     } else {
       return {
-        statusCode: 404,
+        statusCode: 400,
         body: JSON.stringify({
-          message: "Unable to find tables",
+          message: "Query strings missing",
         }),
       };
     }
