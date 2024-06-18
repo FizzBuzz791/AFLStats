@@ -38,6 +38,6 @@
     "postcss-simple-vars": "^7.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.2",
-    "vite": "^5.2.1"
+    "vite": "^5.1.7"
   }
 }
